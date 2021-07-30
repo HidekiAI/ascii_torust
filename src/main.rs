@@ -35,7 +35,7 @@ use std::{thread, time}; // sleep
 // * Torus Z position = 10
 // * Y-up, X-right, Z-forward
 fn main() {
-    let pixels = b".,-~:;=!*#$@";
+    let pixels = b".,-~:;=!*#$@"; // gets darker as surface normal vector gets longer
 
     // Calculate K1 based on screen size: the maximum x-distance occurs
     // roughly at the edge of the torus, which is at x=R1+R2, z=0.  we
@@ -45,21 +45,21 @@ fn main() {
     // screen_width*K2*3/(8*(R1+R2)) = K1
     let screen_width = 80.0f32;
     let screen_height = 22.0;
-    let screen_center_x = screen_width / 2.0;
-    let screen_center_y = screen_height / 2.0;
+    //let screen_center_x = screen_width / 2.0;
+    //let screen_center_y = screen_height / 2.0;
     let char_space = b" "[0]; //32u8;
     let char_line_feed = 10u8; // 10 (0x0A) is ctrl-J (Linefeed/newline), see also decimal13 (0x0D) carriage-return
     let screen_dim = (screen_width * (screen_height + 1.0)) as usize;
     //let size_of_f32 = std::mem::size_of::<f32> as usize;
-    let torus_midpoint_z = 10.0;
+    //let torus_midpoint_z = 10.0;
     let theta_rotate_steps = 0.07;
     let phi_rotate_steps = 0.02;
-    let inner_radius = 1.0; // aka R1
-    let outer_radius = 2.0; // aka R2
-    let two_pi = 2.0 * 3.14159265;
+    //let inner_radius = 1.0; // aka R1
+    //let outer_radius = 2.0; // aka R2
+    let two_pi = 2.0 * ::std::f32::consts::PI; //3.14159265;
 
     // FoV: (x', y') = (K1x/K2+z, K1y/K2+z)
-    let midpoint_screen_projection_z = torus_midpoint_z / 2.0; // aka K2
+    //let midpoint_screen_projection_z = torus_midpoint_z / 2.0; // aka K2
 
     //let kprojection_screen_midpoint_xz = screen_width * midpoint_screen_projection_z * 3.0 / (8.0 * (inner_radius + outer_radius)); // aka K1: distance z' is constant, arbitrarily based on FoV
 
@@ -104,7 +104,6 @@ fn main() {
             //  = ((R2 + R1 cos(theta) cos(phi)), R1 sin(theta), -(R2 + R1 cos(theta)) sin(phi))
             //  Rotate about 2 axis:
             //  (R2 + R1 cos(theta), R1 sin(theta), 0) * | cos(phi)  0  sin(phi) |   | 1   0       0    |   | cos(B)  sin(B) 0 |
-            //
             //                                           |    0      1     0     | * | 0 cos(A)  sin(A) | * | -sin(B) cos(B) 0 |
             //                                           | -sin(phi) 0  cos(phi) |   | 0 -sin(A) cos(A) |   | 0         0    1 |
 
@@ -139,45 +138,42 @@ fn main() {
                 // y = (R2 + R1 cos(theta))(cos(phi) sin(B) - cos(B) sin(A) sin(phi)) + R1 cos(A) cos(B) sin(theta)
                 // z = cos(A)(R2 + R1 cos(theta)) sin(phi) + R1 sin(A) sin(theta)
                 // float h = cos_theta + 2;
-                let h1 = cos_theta + 2.0; // R1 + R2 * cos(theta) ; also see h=d+2
-                let h2 = cos_theta * (outer_radius + inner_radius); // R1 + R2 * cos(theta) ; also see h=d+2
-                let h = h1;
+                //let h2 = cos_theta * (outer_radius + inner_radius); // R1 + R2 * cos(theta) ; also see h=d+2
+                let h = cos_theta + 2.0; // R1 + R2 * cos(theta) ; also see h=d+2
+
                 // float t = sin_phi * h * cos_a - sin_theta * sin_a;
                 let _t = sin_phi * h * cos_a - sin_theta * sin_a;
                 // float D = 1 / (sin_phi * h * sin_a + sin_theta * cos_a + 5);
                 let _D = 1.0 / (sin_phi * h * sin_a + sin_theta * cos_a + 5.0);
-                let local_z =
-                    sin_phi * h * sin_a + sin_theta * cos_a + midpoint_screen_projection_z; // +5 to adjust midpoint (also makes it so it won't cause 1/z (1/0) infinity)
-                let one_over_z = 1.0 / local_z; // 1/z == 0 is infinite depth
-                let t = sin_phi * h * cos_a - sin_theta * sin_a; // "this is a clever factoring of some of the terms in x' and y'"
+                //let local_z = sin_phi * h * sin_a + sin_theta * cos_a + midpoint_screen_projection_z; // +5 to adjust midpoint (also makes it so it won't cause 1/z (1/0) infinity)
+                //let one_over_z = 1.0 / local_z; // 1/z == 0 is infinite depth
+                //let t = sin_phi * h * cos_a - sin_theta * sin_a; // "this is a clever factoring of some of the terms in x' and y'"
 
                 // int x = 40 + 30 * D * (cos_phi * h * cos_b - t * sin_b);
                 // x = 40 + 30 * D * (l * h * m - t * n)
                 let _x = (40.0 + 30.0 * _D * (cos_phi * h * cos_b - _t * sin_b)) as usize;
-                let projection_x = // circlex * (cos_b * cosphi + sin_a * sin_b * sinphi) - circley * cos_a * sin_b
-                    screen_center_x + 30.0 * one_over_z * (cos_phi * h * cos_b - t * sin_b);
+                //let projection_x = // circlex * (cos_b * cosphi + sin_a * sin_b * sinphi) - circley * cos_a * sin_b
+                //    screen_center_x + 30.0 * one_over_z * (cos_phi * h * cos_b - t * sin_b);
                 // int y = 12 + 15 * D * (cos_phi * h * sin_b + t * cos_b);
                 // y = 12 + 15 * D * (l * h * n + t * m)
                 let _y = (12.0 + 15.0 * _D * (cos_phi * h * sin_b + _t * cos_b)) as usize;
-                let projection_y =
-                    // circlex * (sin_b * cosphi - sin_a * cos_b * sinphi) + circley * cos_a * cos_b
-                    screen_center_y + 15.0 * one_over_z * (cos_phi * h * sin_b + t * cos_b);
+                //let projection_y =
+                //    // circlex * (sin_b * cosphi - sin_a * cos_b * sinphi) + circley * cos_a * cos_b
+                //    screen_center_y + 15.0 * one_over_z * (cos_phi * h * sin_b + t * cos_b);
                 //let ooz_proj = 1.0 / proj_z; // one over z (ooz)
 
                 // surface normal
-                let pos_xy = projection_x + (screen_width * projection_y); // go down y rows, and offset by x
-                let us_pos_xy = pos_xy as usize; //if posXY >= 1760.0 { 0.0 } else { posXY };
-
+                //let pos_xy = projection_x + (screen_width * projection_y); // go down y rows, and offset by x
+                //let us_pos_xy = pos_xy as usize; //if posXY >= 1760.0 { 0.0 } else { posXY };
                 // float L = cosphi * costheta * sin_b - cos_a * costheta * sinphi - sin_a * sintheta + cos_b * (cos_a * sintheta - costheta * sin_a * sinphi);
                 // L ranges from -sqrt(2) to +sqrt(2).  If it's < 0, the surface is pointing away from us, so we won't bother trying to plot it.
-                let luminance = (sin_theta * sin_a - sin_phi * cos_theta * cos_a) * cos_b
-                    - sin_phi * cos_theta * sin_a
-                    - sin_theta * cos_a
-                    - cos_phi * cos_theta * sin_b;
+                //let luminance = (sin_theta * sin_a - sin_phi * cos_theta * cos_a) * cos_b
+                //    - sin_phi * cos_theta * sin_a
+                //    - sin_theta * cos_a
+                //    - cos_phi * cos_theta * sin_b;
                 // luminance_index is now in the range 0..11 (8*sqrt(2) = 11.3), now we lookup the character corresponding to the luminance and plot it in our output:
-                let luminance_index = 8.0 * luminance; // range it between 0..11
-                let depth = mut_z_buff[us_pos_xy];
-
+                //let luminance_index = 8.0 * luminance; // range it between 0..11
+                //let depth = mut_z_buff[us_pos_xy];
                 //// calculate luminance. ugly, but correct.
                 //if screen_height > projection_y
                 //    && projection_y > 0.0
