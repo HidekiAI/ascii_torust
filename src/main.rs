@@ -23,9 +23,8 @@
 //          .,~~;;;========;;;:~-.
 //              ..,--------,*/
 //
-// There is an optimized version which does not call math-libs, but for this
-// port, it would be more straight-forward to use the one  with cos/sin libs
-//
+// Port: Hideki A. Ikeda <HidekiAI@CodeMonkeyNinja.dev>
+// 2021-July
 
 //use std::ptr;
 use std::{thread, time}; // sleep
